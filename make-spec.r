@@ -1,6 +1,8 @@
 REBOL [
     Name: Deci
     Notes: "See %extensions/README.md for the format and fields of this file"
+
+    Extended-Types: [deci!]
 ]
 
 use-librebol: 'no

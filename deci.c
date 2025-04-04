@@ -112,6 +112,7 @@
 //
 
 
+#include "sys-core.h"
 #include "tmp-mod-deci.h"
 
 #include "deci.h"

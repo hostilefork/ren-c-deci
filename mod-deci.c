@@ -32,7 +32,10 @@
 // See remarks in README.md for more information.
 //
 
+#include "sys-core.h"
 #include "tmp-mod-deci.h"
+
+#include "tmp-paramlists.h"
 
 #include "deci.h"
 
@@ -40,7 +43,7 @@
 INLINE Element* Init_Deci(Init(Element) out, deci amount) {
     Reset_Extended_Cell_Header_Noquote(
         out,
-        EXTENDED_HEART(Is_Deci),
+        EXTRA_HEART_DECI,
         (CELL_FLAG_DONT_MARK_NODE1)  // whole payload is just deci data
             | CELL_FLAG_DONT_MARK_NODE2  // none of it should be marked
     );
@@ -127,20 +130,12 @@ static Option(Error*) Trap_Blob_To_Deci(Sink(Value) out, const Element* blob)
 }
 
 
-//
-//  export make-deci: native [
-//
-//  "Make a DECI! workaround (MAKE DECI! is still in progress"
-//
-//      return: [element?]  ; DECI! not working yet
-//      spec [integer! decimal! percent! money! text! blob!]
-//  ]
-//
-DECLARE_NATIVE(MAKE_DECI)
+IMPLEMENT_GENERIC(MAKE, Is_Deci)
 {
-    INCLUDE_PARAMS_OF_MAKE_DECI;
+    INCLUDE_PARAMS_OF_MAKE;  // [integer! decimal! percent! money! text! blob!]
+    UNUSED(ARG(TYPE));
 
-    Element* arg = Element_ARG(SPEC);
+    Element* arg = Element_ARG(DEF);
 
     switch (Type_Of(arg)) {
       case TYPE_INTEGER:
@@ -173,7 +168,7 @@ DECLARE_NATIVE(MAKE_DECI)
         break;
     }
 
-    return FAIL(PARAM(SPEC));
+    return FAIL(PARAM(DEF));
 }
 
 
@@ -394,7 +389,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
 //
 //  startup*: native [
 //
-//  "Register behaviors for DECI!"
+//  "Startup DECI! Extension"
 //
 //      return: [~]
 //  ]
@@ -403,10 +398,6 @@ DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
-    EXTENDED_HEART(Is_Deci) = Register_Datatype("deci!");
-
-    Register_Generics(EXTENDED_GENERICS());
-
     return NOTHING;
 }
 
@@ -414,7 +405,7 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  shutdown*: native [
 //
-//  "Unregister behaviors for DECI!"
+//  "Shutdown DECI! Extension"
 //
 //      return: [~]
 //  ]
@@ -422,10 +413,6 @@ DECLARE_NATIVE(STARTUP_P)
 DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
-
-    Unregister_Generics(EXTENDED_GENERICS());
-
-    Unregister_Datatype(EXTENDED_HEART(Is_Deci));
 
     return NOTHING;
 }
