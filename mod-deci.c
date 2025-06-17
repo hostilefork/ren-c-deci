@@ -149,13 +149,14 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
         return Copy_Cell(OUT, arg);
 
       case TYPE_TEXT: {
-        Option(Error*) error = Trap_Transcode_One(OUT, TYPE_0, arg);
+        Sink(Element) out = OUT;
+        Option(Error*) error = Trap_Transcode_One(out, TYPE_0, arg);
         if (error)
             return FAIL(unwrap error);
-        if (Is_Deci(OUT))
+        if (Is_Deci(out))
             return OUT;
-        if (Is_Decimal(OUT) or Is_Integer(OUT))
-            return Init_Deci(OUT, decimal_to_deci(Dec64(stable_OUT)));
+        if (Is_Decimal(out) or Is_Integer(out))
+            return Init_Deci(OUT, decimal_to_deci(Dec64(out)));
         break; }
 
       case TYPE_BLOB: {
@@ -339,9 +340,11 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
 
     Element* v = Element_ARG(VALUE);
 
-    Value* to = ARG(TO);
-    if (Is_Nulled(to))
-        Init_Deci(to, decimal_to_deci(1.0L));
+    Element* to;
+    if (Is_Nulled(ARG(TO)))
+        to = Init_Deci(ARG(TO), decimal_to_deci(1.0L));
+    else
+        to = Element_ARG(TO);
 
     deci scale = decimal_to_deci(Bool_ARG(TO) ? Dec64(ARG(TO)) : 1.0);
 
@@ -367,13 +370,13 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
         d = deci_half_away(d, scale);
 
     if (Is_Decimal(to) or Is_Percent(to)) {
-        REBDEC dec = deci_to_decimal(d);
         Heart to_heart = Heart_Of_Builtin_Fundamental(to);
+        Init(Element) out = TRACK(OUT);
         Reset_Cell_Header_Noquote(
-            TRACK(OUT),
-            FLAG_HEART_BYTE(to_heart) | CELL_MASK_NO_NODES
+            out,
+            FLAG_HEART_ENUM(to_heart) | CELL_MASK_NO_NODES
         );
-        VAL_DECIMAL(OUT) = dec;
+        VAL_DECIMAL(out) = deci_to_decimal(d);
         return OUT;
     }
 
