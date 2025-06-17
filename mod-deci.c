@@ -71,7 +71,7 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Deci)
 
     deci a = Cell_Deci_Amount(ARG(VALUE1));
     deci b = Cell_Deci_Amount(ARG(VALUE2));
-    UNUSED(ARG(STRICT));
+    UNUSED(ARG(RELAX));
 
     return LOGIC(deci_is_equal(a, b));
 }
