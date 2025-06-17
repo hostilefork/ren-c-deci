@@ -11,12 +11,10 @@ includes: [
     %prep/extensions/deci
 ]
 
-sources: %mod-deci.c
+sources: [mod-deci.c]
 
 depends: [
-    [
-        %deci.c
-
+    deci.c [
         ; May 2018 update to MSVC 2017 added warnings for Spectre mitigation.
         ; %deci.c is a lot of twiddly custom C code for implementing a fixed
         ; precision math type, that was for some reason a priority in R3-Alpha
