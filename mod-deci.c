@@ -190,7 +190,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     Append_Ascii(mo->string, "]");
 
-    return NOTHING;
+    return TRIPWIRE;
 }
 
 
@@ -391,14 +391,14 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
 //
 //  "Startup DECI! Extension"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
-    return NOTHING;
+    return TRIPWIRE;
 }
 
 
@@ -407,12 +407,12 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shutdown DECI! Extension"
 //
-//      return: [~]
+//      return: []
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    return NOTHING;
+    return TRIPWIRE;
 }
