@@ -94,16 +94,16 @@
 //        #define OVERFLOW_ERROR Trap0(RE_OVERFLOW)
 //        #define DIVIDE_BY_ZERO_ERROR Trap0(RE_ZERO_DIVIDE)
 //
-//     Ren-C "Abrupt Failures" are done with fail().  But experience has borne
+//     Ren-C "Abrupt Failures" are done with panic().  But experience has borne
 //     out that using longjmp() or C++ exceptions are not good ways to deal
 //     with errors that you don't think should have potential to crash the
-//     system.  So most places that can legitimately raise errors do so
-//     cooperatively by bubbling up errors normally through the call stack.
-//     (This also allows the code to gracefully handle errors on restricted
-//     systems that do not offer longjmp() or C++ exceptions at all.)
+//     system.  So most places that can want to panic do so cooperatively by
+//     bubbling up a thrown PANIC() normally through the call stack.  (This
+//     also allows the code to gracefully handle errors on restricted systems
+//     that do not offer longjmp() or C++ exceptions at all.)
 //
 //     Re-engineering deci to use that style would be a lot of work, so we
-//     just use abrupt failures here, as R3-Alpha did.
+//     just use abrupt panics here, as R3-Alpha did.
 //
 // F. A test for `if (m == 1)` triggered a warning in gcc 4.9.2 in -O2 mode
 //    that array subscripting with [m - 1] could be below array bounds, due to
@@ -118,8 +118,8 @@
 #include "deci.h"
 #include "sys-dec-to-char.h"
 
-#define OVERFLOW_ERROR          fail (Error_Overflow_Raw())  // see [E]
-#define DIVIDE_BY_ZERO_ERROR    fail (Error_Zero_Divide_Raw())
+#define OVERFLOW_ERROR          panic (Error_Overflow_Raw())  // see [E]
+#define DIVIDE_BY_ZERO_ERROR    panic (Error_Zero_Divide_Raw())
 
 #define IS_DIGIT(c) ((c) >= '0' && (c) <= '9')
 

@@ -101,7 +101,7 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Deci)
 
 
 // !!! The deci API is being left mostly untouched, so it doesn't return
-// Option(Error*), it just abruptly fail()s.  Try to contain the issue by
+// Option(Error*), it just abruptly panic()s.  Try to contain the issue by
 // using RESCUE_SCOPE().
 //
 static Option(Error*) Trap_Blob_To_Deci(Sink(Value) out, const Element* blob)
@@ -118,14 +118,14 @@ static Option(Error*) Trap_Blob_To_Deci(Sink(Value) out, const Element* blob)
     memcpy(buf + 12 - size, buf, size);  // shift to right side
     memset(buf, 0, 12 - size);
 
-    RESCUE_SCOPE_IN_CASE_OF_ABRUPT_FAILURE {
+    RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {
         Init_Deci(out, binary_to_deci(buf));
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
         return nullptr;  // no failure
     }
-    ON_ABRUPT_FAILURE (Error* e) {
+    ON_ABRUPT_PANIC (error) {
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-        return e;
+        return error;
     }
 }
 
@@ -151,7 +151,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
       case TYPE_TEXT: {
         Option(Error*) error = Trap_Transcode_One(OUT, TYPE_0, arg);
         if (error)
-            return RAISE(unwrap error);
+            return FAIL(unwrap error);
         if (Is_Deci(OUT))
             return OUT;
         if (Is_Decimal(OUT) or Is_Integer(OUT))
@@ -161,14 +161,14 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
       case TYPE_BLOB: {
         Option(Error*) e = Trap_Blob_To_Deci(OUT, arg);
         if (e)
-            return FAIL(unwrap e);
+            return PANIC(unwrap e);
         return OUT; }
 
       default:
         break;
     }
 
-    return FAIL(PARAM(DEF));
+    return PANIC(PARAM(DEF));
 }
 
 
@@ -212,7 +212,7 @@ static Value* Math_Arg_For_Money(
         return store;
     }
 
-    fail (Error_Math_Args(TYPE_MONEY, verb));
+    panic (Error_Math_Args(TYPE_MONEY, verb));
 }
 
 
@@ -291,7 +291,7 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
         REBI64 i = deci_to_int(d);
         deci reverse = int_to_deci(i);
         if (not deci_is_equal(d, reverse))
-            return RAISE(
+            return FAIL(
                 "Can't TO INTEGER! a MONEY! w/digits after decimal point"
             );
         return Init_Integer(OUT, i);
@@ -346,7 +346,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
     deci scale = decimal_to_deci(Bool_ARG(TO) ? Dec64(ARG(TO)) : 1.0);
 
     if (deci_is_zero(scale))
-        return RAISE(Error_Zero_Divide_Raw());
+        return FAIL(Error_Zero_Divide_Raw());
 
     scale = deci_abs(scale);
 
