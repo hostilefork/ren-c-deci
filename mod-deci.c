@@ -121,7 +121,7 @@ static Option(Error*) Trap_Blob_To_Deci(Sink(Value) out, const Element* blob)
     RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {
         Init_Deci(out, binary_to_deci(buf));
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-        return nullptr;  // no failure
+        return SUCCESS;
     }
     ON_ABRUPT_PANIC (error) {
         CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
