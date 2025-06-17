@@ -182,13 +182,13 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     UNUSED(form);
 
-    Append_Ascii(mo->string, "#[deci!");  // deci_to_string adds space
+    Begin_Non_Lexical_Mold(mo, v);  // deci_to_string adds space
 
     Byte buf[60];
     REBINT len = deci_to_string(buf, Cell_Deci_Amount(v), ' ', '.');
     Append_Ascii_Len(mo->string, s_cast(buf), len);
 
-    Append_Ascii(mo->string, "]");
+    End_Non_Lexical_Mold(mo);
 
     return TRIPWIRE;
 }
