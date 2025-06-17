@@ -1,10 +1,10 @@
 //
-//  File: %deci.c
-//  Summary: "extended precision arithmetic functions"
-//  Section: math
-//  Project: "Rebol 3 Interpreter and Run-time"
-//  Author: "Ladislav Mecir"
-//  Homepage: https://github.com/rebol/rebol/
+//  file: %deci.c
+//  summary: "extended precision arithmetic functions"
+//  section: math
+//  project: "Rebol 3 Interpreter and Run-time"
+//  author: "Ladislav Mecir"
+//  homepage: https://github.com/rebol/rebol/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

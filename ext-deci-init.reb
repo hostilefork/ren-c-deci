@@ -1,7 +1,7 @@
-REBOL [
-    Title: "Precision Decimal Type Extension"
-    Name: Deci
-    Type: Module
-    Version: 1.0.0
-    License: "Apache 2.0"
+Rebol [
+    title: "Precision Decimal Type Extension"
+    name: Deci
+    type: module
+    version: 1.0.0
+    license: "Apache 2.0"
 ]

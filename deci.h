@@ -1,9 +1,9 @@
 //
-//  File: %deci.h
-//  Summary: "Deci Datatype Function Prototypes"
-//  Project: "Rebol 3 Interpreter and Run-time"
-//  Author: "Ladislav Mecir"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %deci.h
+//  summary: "Deci Datatype Function Prototypes"
+//  project: "Rebol 3 Interpreter and Run-time"
+//  author: "Ladislav Mecir"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //

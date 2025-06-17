@@ -1,9 +1,9 @@
 //
-//  File: %mod-deci.c
-//  Summary: "Extended Precision Datatype Excised From R3-Alpha"
-//  Section: datatypes
-//  Project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  Homepage: https://github.com/metaeducation/ren-c/
+//  file: %mod-deci.c
+//  summary: "Extended Precision Datatype Excised From R3-Alpha"
+//  section: datatypes
+//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
+//  homepage: https://github.com/metaeducation/ren-c/
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
