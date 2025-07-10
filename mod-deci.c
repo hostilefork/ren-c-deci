@@ -44,8 +44,8 @@ INLINE Element* Init_Deci(Init(Element) out, deci amount) {
     Reset_Extended_Cell_Header_Noquote(
         out,
         EXTRA_HEART_DECI,
-        (CELL_FLAG_DONT_MARK_NODE1)  // whole payload is just deci data
-            | CELL_FLAG_DONT_MARK_NODE2  // none of it should be marked
+        (CELL_FLAG_DONT_MARK_PAYLOAD_1)  // whole payload is just deci data
+            | CELL_FLAG_DONT_MARK_PAYLOAD_2  // none of it should be marked
     );
 
     STATIC_ASSERT(sizeof(out->payload.at_least_8) >= sizeof(deci));
@@ -102,14 +102,16 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Deci)
 
 // !!! The deci API is being left mostly untouched, so it doesn't return
 // Option(Error*), it just abruptly panic()s.  Try to contain the issue by
-// using RESCUE_SCOPE().
+// using RECOVER_SCOPE().
 //
-static Option(Error*) Trap_Blob_To_Deci(Sink(Value) out, const Element* blob)
-{
+static Result(Zero) Blob_To_Deci(
+    Sink(Value) out,
+    const Element* blob
+){
     assert(Is_Blob(blob));
 
     Size size;
-    const Byte* at = Cell_Blob_Size_At(&size, blob);
+    const Byte* at = Blob_Size_At(&size, blob);
     if (size > 12)
         size = 12;
 
@@ -118,15 +120,15 @@ static Option(Error*) Trap_Blob_To_Deci(Sink(Value) out, const Element* blob)
     memcpy(buf + 12 - size, buf, size);  // shift to right side
     memset(buf, 0, 12 - size);
 
-    RESCUE_SCOPE_IN_CASE_OF_ABRUPT_PANIC {
+    RECOVER_SCOPE_CLOBBERS_ABOVE_LOCALS_IF_MODIFIED {
         Init_Deci(out, binary_to_deci(buf));
-        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-        return SUCCESS;
+        CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
     }
-    ON_ABRUPT_PANIC (error) {
-        CLEANUP_BEFORE_EXITING_RESCUE_SCOPE;
-        return error;
+    ON_ABRUPT_PANIC (Error* e) {
+        return fail (e);
     }
+
+    return zero;
 }
 
 
@@ -137,7 +139,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
 
     Element* arg = Element_ARG(DEF);
 
-    switch (Type_Of(arg)) {
+    switch (maybe Type_Of(arg)) {
       case TYPE_INTEGER:
         return Init_Deci(OUT, int_to_deci(VAL_INT64(arg)));
 
@@ -150,9 +152,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
 
       case TYPE_TEXT: {
         Sink(Element) out = OUT;
-        Option(Error*) error = Trap_Transcode_One(out, TYPE_0, arg);
-        if (error)
-            return FAIL(unwrap error);
+
+        trapped (Transcode_One(out, TYPE_0, arg));
+
         if (Is_Deci(out))
             return OUT;
         if (Is_Decimal(out) or Is_Integer(out))
@@ -160,16 +162,14 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
         break; }
 
       case TYPE_BLOB: {
-        Option(Error*) e = Trap_Blob_To_Deci(OUT, arg);
-        if (e)
-            return PANIC(unwrap e);
+        required (Blob_To_Deci(OUT, arg));
         return OUT; }
 
       default:
         break;
     }
 
-    return PANIC(PARAM(DEF));
+    panic (PARAM(DEF));
 }
 
 
@@ -187,7 +187,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     Byte buf[60];
     REBINT len = deci_to_string(buf, Cell_Deci_Amount(v), ' ', '.');
-    Append_Ascii_Len(mo->string, s_cast(buf), len);
+    required (Append_Ascii_Len(mo->strand, s_cast(buf), len));
 
     End_Non_Lexical_Mold(mo);
 
@@ -224,7 +224,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Deci)
 
     Element* v = cast(Element*, ARG_N(1));
 
-    switch (id) {
+    switch (maybe id) {
       case SYM_ADD: {
         Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Deci(
@@ -261,19 +261,23 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Deci)
         v->payload.split.two.u &= ~(cast(uintptr_t, 1) << 31);
         return COPY(v);
 
-      case SYM_EVEN_Q:
-      case SYM_ODD_Q: {
-        REBINT result = 1 & cast(REBINT, deci_to_int(Cell_Deci_Amount(v)));
-        if (Symbol_Id(verb) == SYM_EVEN_Q)
-            result = not result;
-        return Init_Logic(OUT, result != 0); }
-
       default:
         break;
     }
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
+
+
+/*IMPLEMENT_GENERIC(EVEN_Q, Is_Deci)  // ODD_Q is defined as NOT EVEN_Q
+{
+    INCLUDE_PARAMS_OF_EVEN_Q;
+
+    Element* deci = ARG(VALUE);
+
+    REBINT result = 1 & cast(REBINT, deci_to_int(Cell_Deci_Amount(deci)));
+    return LOGIC(result == 0);
+}*/
 
 
 IMPLEMENT_GENERIC(TO, Is_Deci)
@@ -292,7 +296,7 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
         REBI64 i = deci_to_int(d);
         deci reverse = int_to_deci(i);
         if (not deci_is_equal(d, reverse))
-            return FAIL(
+            return fail (
                 "Can't TO INTEGER! a MONEY! w/digits after decimal point"
             );
         return Init_Integer(OUT, i);
@@ -308,7 +312,7 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
         SET_MOLD_FLAG(mo, MOLD_FLAG_SPREAD);
         Push_Mold(mo);
         Mold_Element(mo, v);
-        const String* s = Pop_Molded_String(mo);
+        const Strand* s = Pop_Molded_Strand(mo);
         if (not Any_String_Type(to))
             Freeze_Flex(s);
         return Init_Any_String(OUT, to, s);;
@@ -317,7 +321,7 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
     if (to == TYPE_MONEY)
         return COPY(v);
 
-    return UNHANDLED;
+    panic (UNHANDLED);
 }
 
 
@@ -349,7 +353,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
     deci scale = decimal_to_deci(Bool_ARG(TO) ? Dec64(ARG(TO)) : 1.0);
 
     if (deci_is_zero(scale))
-        return FAIL(Error_Zero_Divide_Raw());
+        return fail (Error_Zero_Divide_Raw());
 
     scale = deci_abs(scale);
 
@@ -374,7 +378,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
         Init(Element) out = TRACK(OUT);
         Reset_Cell_Header_Noquote(
             out,
-            FLAG_HEART_ENUM(to_heart) | CELL_MASK_NO_NODES
+            FLAG_HEART(to_heart) | CELL_MASK_NO_MARKING
         );
         VAL_DECIMAL(out) = deci_to_decimal(d);
         return OUT;
