@@ -71,46 +71,30 @@ adding size to the executable.  It is a significant amount of code that isn't
 easy for the uninitiated (or the initiated?) to read.
 
 
-### Ren-C Changed MONEY! to an ANY-UTF8? Type
+### Plus... Ren-C Has "TIED!" Values ($10 is a "Tied Integer")
 
-The idea is that a MONEY! is an immutable string type.  It's a $ followed by
-digits, with an optional decimal point plus exactly two additional digits
-coming after it.
+It's a fundamental idea in Ren-C that values can carry a "Sigil" (either a
+`$`, or `^`, or `@`).  The $ Sigil is called a TIE.
 
-    >> $10
-    == $10
+    >> map-each 'item [hello 1020 [wo r ld]] [tie item]
+    == [$hello $1020 $[wo r ld]]
 
-    >> $10.20
-    == $10.20
+Tied WORD!s, sequences, and lists play an important role in binding for the
+evaluator.  And while it might not seem that there's a binding to be carried
+by numbers, tied INTEGER!s play a part too--because they imply you want to
+commute binding when doing things like a PICK:
 
-    >> $10.2
-    ** Syntax Error: invalid "money" -- "$10.2"
+    >> x: 10 y: 20
 
-    >> $0.304
-    ** Syntax Error: invalid "money" -- "$0.304"
+    >> vars: [x y]
 
-The dollar sign is not part of the string:
+    >> get vars.1
+    ** PANIC: x is not bound
 
-    >> to tag! $120,384,787,857498348754304930485094830948509438598435.50
-    == <120384787857498348754304930485094830948509438598435.50>
+    >> get vars.$1
+    == 10
 
-It's possible to convert MONEY! values into DECIMAL! or INTEGER! via the
-same code that operates on strings, do math on them, and then convert them
-back into MONEY!:
-
-    >> sum: (make decimal! $1.50) + (make integer! $5)
-    == 6.5
-
-    >> make money! sum
-    == $6.50
-
-    >> make money! round sum
-    == $6
-
-In practice, the truly useful form for dialects is integers: $1 $2 $3 $4 $5.
-These are succinct and can indicate points of substitution or other things.
-It's crucial that they not get random ".00" tacked onto them without an
-operation explicitly requesting that.
+So MONEY! simply doesn't have the importance to take this lexical space.
 
 
 ### Extension Sacrifice: Deci Extension only works on 64-bit
