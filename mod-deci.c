@@ -180,7 +180,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 {
     INCLUDE_PARAMS_OF_MOLDIFY;
 
-    Element* v = Element_ARG(ELEMENT);
+    Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
     bool form = Bool_ARG(FORM);
 
@@ -258,14 +258,6 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Deci)
             deci_mod(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
         ); }
 
-      case SYM_NEGATE: // sign bit is the 32nd bit, highest one used
-        v->payload.split.two.u ^= (cast(uintptr_t, 1) << 31);
-        return COPY(v);
-
-      case SYM_ABSOLUTE:
-        v->payload.split.two.u &= ~(cast(uintptr_t, 1) << 31);
-        return COPY(v);
-
       default:
         break;
     }
@@ -274,23 +266,12 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Deci)
 }
 
 
-/*IMPLEMENT_GENERIC(EVEN_Q, Is_Deci)  // ODD_Q is defined as NOT EVEN_Q
-{
-    INCLUDE_PARAMS_OF_EVEN_Q;
-
-    Element* deci = ARG(VALUE);
-
-    REBINT result = 1 & cast(REBINT, deci_to_int(Cell_Deci_Amount(deci)));
-    return LOGIC(result == 0);
-}*/
-
-
 IMPLEMENT_GENERIC(TO, Is_Deci)
 {
     INCLUDE_PARAMS_OF_TO;
 
-    Element* v = Element_ARG(ELEMENT);
-    Heart to = Cell_Datatype_Builtin_Heart(ARG(TYPE));
+    Element* v = Element_ARG(VALUE);
+    Heart to = Datatype_Builtin_Heart(ARG(TYPE));
 
     deci d = Cell_Deci_Amount(v);
 
@@ -327,6 +308,28 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
         return COPY(v);
 
     panic (UNHANDLED);
+}
+
+
+IMPLEMENT_GENERIC(NEGATE, Is_Deci)
+{
+    INCLUDE_PARAMS_OF_NEGATE;
+
+    Element* v = Element_ARG(VALUE);  // sign bit is 32nd bit, highest used
+
+    v->payload.split.two.u ^= (cast(uintptr_t, 1) << 31);
+    return COPY(v);
+}
+
+
+IMPLEMENT_GENERIC(ABSOLUTE, Is_Deci)
+{
+    INCLUDE_PARAMS_OF_ABSOLUTE;
+
+    Element* v = Element_ARG(VALUE);  // sign bit is 32nd bit, highest used
+
+    v->payload.split.two.u &= ~(cast(uintptr_t, 1) << 31);
+    return COPY(v);
 }
 
 
