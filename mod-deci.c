@@ -139,7 +139,7 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
 
     Element* arg = Element_ARG(DEF);
 
-    switch (maybe Type_Of(arg)) {
+    switch (opt Type_Of(arg)) {
       case TYPE_INTEGER:
         return Init_Deci(OUT, int_to_deci(VAL_INT64(arg)));
 
@@ -153,8 +153,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
       case TYPE_TEXT: {
         Sink(Element) out = OUT;
 
-        trapped (Transcode_One(out, TYPE_0, arg));
-
+        trap (
+          Transcode_One(out, TYPE_0, arg)
+        );
         if (Is_Deci(out))
             return OUT;
         if (Is_Decimal(out) or Is_Integer(out))
@@ -162,7 +163,9 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
         break; }
 
       case TYPE_BLOB: {
-        required (Blob_To_Deci(OUT, arg));
+        require (
+          Blob_To_Deci(OUT, arg)
+        );
         return OUT; }
 
       default:
@@ -187,7 +190,9 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     Byte buf[60];
     REBINT len = deci_to_string(buf, Cell_Deci_Amount(v), ' ', '.');
-    required (Append_Ascii_Len(mo->strand, s_cast(buf), len));
+    require (
+      Append_Ascii_Len(mo->strand, s_cast(buf), len)
+    );
 
     End_Non_Lexical_Mold(mo);
 
@@ -224,7 +229,7 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Deci)
 
     Element* v = cast(Element*, ARG_N(1));
 
-    switch (maybe id) {
+    switch (opt id) {
       case SYM_ADD: {
         Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Deci(
