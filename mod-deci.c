@@ -39,6 +39,8 @@
 
 #include "deci.h"
 
+#define TYPE_MONEY  TYPE_DECIMAL  // proxy, but this doesn't work anymore
+
 
 INLINE Element* Init_Deci(Init(Element) out, deci amount) {
     Reset_Extended_Cell_Header_Noquote(
@@ -104,8 +106,8 @@ IMPLEMENT_GENERIC(ZEROIFY, Is_Deci)
 // Option(Error*), it just abruptly panic()s.  Try to contain the issue by
 // using RECOVER_SCOPE().
 //
-static Result(Zero) Blob_To_Deci(
-    Sink(Value) out,
+static Result(None) Blob_To_Deci(
+    Sink(Stable) out,
     const Element* blob
 ){
     assert(Is_Blob(blob));
@@ -128,7 +130,7 @@ static Result(Zero) Blob_To_Deci(
         return fail (e);
     }
 
-    return zero;
+    return none;
 }
 
 
@@ -146,9 +148,6 @@ IMPLEMENT_GENERIC(MAKE, Is_Deci)
       case TYPE_DECIMAL:
       case TYPE_PERCENT:
         return Init_Deci(OUT, decimal_to_deci(VAL_DECIMAL(arg)));
-
-      case TYPE_MONEY:
-        return Copy_Cell(OUT, arg);
 
       case TYPE_TEXT: {
         Sink(Element) out = OUT;
@@ -182,7 +181,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = Bool_ARG(FORM);
+    bool form = did ARG(FORM);
 
     UNUSED(form);
 
@@ -196,13 +195,13 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     End_Non_Lexical_Mold(mo);
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
-static Value* Math_Arg_For_Money(
-    Sink(Value) store,
-    Value* arg,
+static Stable* Math_Arg_For_Money(
+    Sink(Stable) store,
+    Stable* arg,
     const Symbol* verb
 ){
     if (Is_Deci(arg))
@@ -231,28 +230,28 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Deci)
 
     switch (opt id) {
       case SYM_ADD: {
-        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
+        Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Deci(
             OUT,
             deci_add(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
         ); }
 
       case SYM_SUBTRACT: {
-        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
+        Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Deci(
             OUT,
             deci_subtract(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
         ); }
 
       case SYM_DIVIDE: {
-        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
+        Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Deci(
             OUT,
             deci_divide(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
         ); }
 
       case SYM_REMAINDER: {
-        Value* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
+        Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
         return Init_Deci(
             OUT,
             deci_mod(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
@@ -304,9 +303,6 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
         return Init_Any_String(OUT, to, s);;
     }
 
-    if (to == TYPE_MONEY)
-        return COPY(v);
-
     panic (UNHANDLED);
 }
 
@@ -339,7 +335,7 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Deci)
 
     deci d1 = Cell_Deci_Amount(ARG(VALUE1));  // first generic arg is money
 
-    Value* money2 = Math_Arg_For_Money(SPARE, ARG(VALUE2), CANON(MULTIPLY));
+    Stable* money2 = Math_Arg_For_Money(SPARE, ARG(VALUE2), CANON(MULTIPLY));
     deci d2 = Cell_Deci_Amount(money2);
 
     return Init_Deci(OUT, deci_multiply(d1, d2));
@@ -352,13 +348,11 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
 
     Element* v = Element_ARG(VALUE);
 
-    Element* to;
-    if (Is_Nulled(ARG(TO)))
-        to = Init_Deci(ARG(TO), decimal_to_deci(1.0L));
-    else
-        to = Element_ARG(TO);
+    Stable* to = opt ARG(TO);
+    if (not to)
+        to = Init_Deci(LOCAL(TO), decimal_to_deci(1.0L));
 
-    deci scale = decimal_to_deci(Bool_ARG(TO) ? Dec64(ARG(TO)) : 1.0);
+    deci scale = decimal_to_deci(Dec64(to));
 
     if (deci_is_zero(scale))
         return fail (Error_Zero_Divide_Raw());
@@ -366,23 +360,23 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
     scale = deci_abs(scale);
 
     deci d = Cell_Deci_Amount(v);;
-    if (Bool_ARG(EVEN))
+    if (ARG(EVEN))
         d = deci_half_even(d, scale);
-    else if (Bool_ARG(DOWN))
+    else if (ARG(DOWN))
         d = deci_truncate(d, scale);
-    else if (Bool_ARG(HALF_DOWN))
+    else if (ARG(HALF_DOWN))
         d = deci_half_truncate(d, scale);
-    else if (Bool_ARG(FLOOR))
+    else if (ARG(FLOOR))
         d = deci_floor(d, scale);
-    else if (Bool_ARG(CEILING))
+    else if (ARG(CEILING))
         d = deci_ceil(d, scale);
-    else if (Bool_ARG(HALF_CEILING))
+    else if (ARG(HALF_CEILING))
         d = deci_half_ceil(d, scale);
     else
         d = deci_half_away(d, scale);
 
     if (Is_Decimal(to) or Is_Percent(to)) {
-        Heart to_heart = Heart_Of_Builtin_Fundamental(to);
+        Heart to_heart = Heart_Of_Builtin_Fundamental(Known_Element(to));
         Init(Element) out = TRACK(OUT);
         Reset_Cell_Header_Noquote(
             out,
@@ -406,14 +400,14 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
 //
 //  "Startup DECI! Extension"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
-    return TRIPWIRE;
+    return TRASH;
 }
 
 
@@ -422,12 +416,12 @@ DECLARE_NATIVE(STARTUP_P)
 //
 //  "Shutdown DECI! Extension"
 //
-//      return: []
+//      return: ~
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    return TRIPWIRE;
+    return TRASH;
 }
