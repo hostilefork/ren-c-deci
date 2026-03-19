@@ -71,11 +71,11 @@ IMPLEMENT_GENERIC(EQUAL_Q, Is_Deci)
 {
     INCLUDE_PARAMS_OF_EQUAL_Q;
 
-    deci a = Cell_Deci_Amount(ARG(VALUE1));
-    deci b = Cell_Deci_Amount(ARG(VALUE2));
-    UNUSED(ARG(RELAX));
+    deci a = Cell_Deci_Amount(Element_ARG(VALUE1));
+    deci b = Cell_Deci_Amount(Element_ARG(VALUE2));
+    UNUSED(PARAM(RELAX));
 
-    return LOGIC(deci_is_equal(a, b));
+    return LOGIC_OUT(deci_is_equal(a, b));
 }
 
 
@@ -87,18 +87,19 @@ IMPLEMENT_GENERIC(LESSER_Q, Is_Deci)
     deci b = Cell_Deci_Amount(ARG(VALUE2));
 
     if (deci_is_equal(a, b))
-        return LOGIC(false);
+        return LOGIC_OUT(false);
 
-    return LOGIC(deci_is_lesser_or_equal(a, b));
+    return LOGIC_OUT(deci_is_lesser_or_equal(a, b));
 }
 
 
 IMPLEMENT_GENERIC(ZEROIFY, Is_Deci)
 {
     INCLUDE_PARAMS_OF_ZEROIFY;
-    UNUSED(ARG(EXAMPLE));  // always gives $0
+    UNUSED(PARAM(EXAMPLE));  // always gives $0
 
-    return Init_Deci(OUT, int_to_deci(0));
+    Init_Deci(OUT, int_to_deci(0));
+    return BOUNCE_OUT;
 }
 
 
@@ -137,35 +138,39 @@ static Result(None) Blob_To_Deci(
 IMPLEMENT_GENERIC(MAKE, Is_Deci)
 {
     INCLUDE_PARAMS_OF_MAKE;  // [integer! decimal! percent! money! text! blob!]
-    UNUSED(ARG(TYPE));
+    UNUSED(PARAM(TYPE));
 
-    Element* arg = Element_ARG(DEF);
+    Element* arg = ARG(DEF);
 
     switch (opt Type_Of(arg)) {
-      case TYPE_INTEGER:
-        return Init_Deci(OUT, int_to_deci(VAL_INT64(arg)));
+      case TYPE_INTEGER: {
+        Init_Deci(OUT, int_to_deci(VAL_INT64(arg)));
+        return BOUNCE_OUT; }
 
       case TYPE_DECIMAL:
-      case TYPE_PERCENT:
-        return Init_Deci(OUT, decimal_to_deci(VAL_DECIMAL(arg)));
+      case TYPE_PERCENT: {
+        Init_Deci(OUT, decimal_to_deci(VAL_DECIMAL(arg)));
+        return BOUNCE_OUT; }
 
       case TYPE_TEXT: {
         Sink(Element) out = OUT;
 
         trap (
-          Transcode_One(out, TYPE_0, arg)
+          Transcode_One(out, HEART_0, arg)
         );
         if (Is_Deci(out))
-            return OUT;
-        if (Is_Decimal(out) or Is_Integer(out))
-            return Init_Deci(OUT, decimal_to_deci(Dec64(out)));
+            return BOUNCE_OUT;
+        if (Is_Decimal(out) or Is_Integer(out)) {
+            Init_Deci(OUT, decimal_to_deci(Dec64(out)));
+            return BOUNCE_OUT;
+        }
         break; }
 
       case TYPE_BLOB: {
         require (
           Blob_To_Deci(OUT, arg)
         );
-        return OUT; }
+        return BOUNCE_OUT; }
 
       default:
         break;
@@ -181,7 +186,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     Element* v = Element_ARG(VALUE);
     Molder* mo = Cell_Handle_Pointer(Molder, ARG(MOLDER));
-    bool form = did ARG(FORM);
+    bool form = ARG(FORM);
 
     UNUSED(form);
 
@@ -195,7 +200,7 @@ IMPLEMENT_GENERIC(MOLDIFY, Is_Deci)
 
     End_Non_Lexical_Mold(mo);
 
-    return TRASH;
+    return TRASH_OUT;
 }
 
 
@@ -231,31 +236,35 @@ IMPLEMENT_GENERIC(OLDGENERIC, Is_Deci)
     switch (opt id) {
       case SYM_ADD: {
         Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
-        return Init_Deci(
+        Init_Deci(
             OUT,
             deci_add(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
-        ); }
+        );
+        return BOUNCE_OUT; }
 
       case SYM_SUBTRACT: {
         Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
-        return Init_Deci(
+        Init_Deci(
             OUT,
             deci_subtract(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
-        ); }
+        );
+        return BOUNCE_OUT; }
 
       case SYM_DIVIDE: {
         Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
-        return Init_Deci(
+        Init_Deci(
             OUT,
             deci_divide(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
-        ); }
+        );
+        return BOUNCE_OUT; }
 
       case SYM_REMAINDER: {
         Stable* arg = Math_Arg_For_Money(SPARE, ARG_N(2), verb);
-        return Init_Deci(
+        Init_Deci(
             OUT,
             deci_mod(Cell_Deci_Amount(v), Cell_Deci_Amount(arg))
-        ); }
+        );
+        return BOUNCE_OUT; }
 
       default:
         break;
@@ -274,20 +283,23 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
 
     deci d = Cell_Deci_Amount(v);
 
-    if (to == TYPE_DECIMAL or to == TYPE_PERCENT)
-        return Init_Decimal_Or_Percent(OUT, to, deci_to_decimal(d));
+    if (to == HEART_DECIMAL or to == HEART_PERCENT) {
+        Init_Decimal_Or_Percent(OUT, to, deci_to_decimal(d));
+        return BOUNCE_OUT;
+    }
 
-    if (to == TYPE_INTEGER) {  // !!! how to check for digits after dot?
+    if (to == HEART_INTEGER) {  // !!! how to check for digits after dot?
         REBI64 i = deci_to_int(d);
         deci reverse = int_to_deci(i);
         if (not deci_is_equal(d, reverse))
             return fail (
                 "Can't TO INTEGER! a MONEY! w/digits after decimal point"
             );
-        return Init_Integer(OUT, i);
+        Init_Integer(OUT, i);
+        return BOUNCE_OUT;
     }
 
-    if (Any_Utf8_Type(to)) {
+    if (Any_Utf8_Heart(to)) {
         if (d.e != 0 or d.m1 != 0 or d.m2 != 0)
             Init_Decimal(v, deci_to_decimal(d));
         else
@@ -298,9 +310,10 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
         Push_Mold(mo);
         Mold_Element(mo, v);
         const Strand* s = Pop_Molded_Strand(mo);
-        if (not Any_String_Type(to))
+        if (not Any_String_Heart(to))
             Freeze_Flex(s);
-        return Init_Any_String(OUT, to, s);;
+        Init_String(OUT, to, s);
+        return BOUNCE_OUT;
     }
 
     panic (UNHANDLED);
@@ -314,7 +327,7 @@ IMPLEMENT_GENERIC(NEGATE, Is_Deci)
     Element* v = Element_ARG(VALUE);  // sign bit is 32nd bit, highest used
 
     v->payload.split.two.u ^= (cast(uintptr_t, 1) << 31);
-    return COPY(v);
+    return COPY_TO_OUT(v);
 }
 
 
@@ -325,7 +338,7 @@ IMPLEMENT_GENERIC(ABSOLUTE, Is_Deci)
     Element* v = Element_ARG(VALUE);  // sign bit is 32nd bit, highest used
 
     v->payload.split.two.u &= ~(cast(uintptr_t, 1) << 31);
-    return COPY(v);
+    return COPY_TO_OUT(v);
 }
 
 
@@ -338,7 +351,8 @@ IMPLEMENT_GENERIC(MULTIPLY, Is_Deci)
     Stable* money2 = Math_Arg_For_Money(SPARE, ARG(VALUE2), CANON(MULTIPLY));
     deci d2 = Cell_Deci_Amount(money2);
 
-    return Init_Deci(OUT, deci_multiply(d1, d2));
+    Init_Deci(OUT, deci_multiply(d1, d2));
+    return BOUNCE_OUT;
 }
 
 
@@ -376,52 +390,55 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
         d = deci_half_away(d, scale);
 
     if (Is_Decimal(to) or Is_Percent(to)) {
-        Heart to_heart = Heart_Of_Builtin_Fundamental(Known_Element(to));
+        Heart to_heart = Heart_Of_Builtin_Fundamental(As_Element(to));
         Init(Element) out = TRACK(OUT);
-        Reset_Cell_Header_Noquote(
+        Reset_Cell_Header(
             out,
-            FLAG_HEART(to_heart) | CELL_MASK_NO_MARKING
+            FLAG_HEART_AND_LIFT(to_heart)
+                | CELL_MASK_NO_MARKING
         );
         VAL_DECIMAL(out) = deci_to_decimal(d);
-        return OUT;
+        return BOUNCE_OUT;
     }
 
     if (Is_Integer(to)) {
         REBI64 i64 = deci_to_int(d);
-        return Init_Integer(OUT, i64);
+        Init_Integer(OUT, i64);
+        return BOUNCE_OUT;
     }
 
-    return Init_Deci(OUT, d);
+    Init_Deci(OUT, d);
+    return BOUNCE_OUT;
 }
 
 
 //
-//  startup*: native [
+//  /startup*: native [
 //
 //  "Startup DECI! Extension"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(STARTUP_P)
 {
     INCLUDE_PARAMS_OF_STARTUP_P;
 
-    return TRASH;
+    return TRASH_OUT;
 }
 
 
 //
-//  shutdown*: native [
+//  /shutdown*: native [
 //
 //  "Shutdown DECI! Extension"
 //
-//      return: ~
+//      return: [trash!]
 //  ]
 //
 DECLARE_NATIVE(SHUTDOWN_P)
 {
     INCLUDE_PARAMS_OF_SHUTDOWN_P;
 
-    return TRASH;
+    return TRASH_OUT;
 }

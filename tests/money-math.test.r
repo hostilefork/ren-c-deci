@@ -11,22 +11,22 @@
 (
     x: $999999999999999
     any [
-        warning? rescue [x: x + $1]
-        not warning? rescue [mold x]
+        error? rescue [x: x + $1]
+        not error? rescue [mold x]
     ]
 )
 (
     x: $-999999999999999
     any [
-        warning? rescue [x: x - $1]
-        not warning? rescue [mold x]
+        error? rescue [x: x - $1]
+        not error? rescue [mold x]
     ]
 )
 (
     x: ~
     any [
-        warning? rescue [x: $1234567890123456]
-        not warning? rescue [mold x]
+        error? rescue [x: $1234567890123456]
+        not error? rescue [mold x]
     ]
 )
 ($111 = make money! 111)
