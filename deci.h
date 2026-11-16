@@ -3,7 +3,7 @@
 //  summary: "Deci Datatype Function Prototypes"
 //  project: "Rebol 3 Interpreter and Run-time"
 //  author: "Ladislav Mecir"
-//  homepage: https://github.com/metaeducation/ren-c/
+//  homepage: https://github.com/metaeducation/revolt/
 //
 //=////////////////////////////////////////////////////////////////////////=//
 //
@@ -28,7 +28,7 @@
 //
 // Code from R3-Alpha for "deci", a type that was used to implement MONEY!.
 //
-// Ren-C takes a different strategy in its core, and makes MONEY! an immutable
+// Revolt takes a different strategy in its core, and makes MONEY! an immutable
 // string type (like EMAIL! and URL!).  Instead of just deleting this code,
 // it was moved to an extension... and DECI! is a datatype that you can
 // optionally build into the executable (or load dynamically).

@@ -2,13 +2,13 @@
 //  file: %mod-deci.c
 //  summary: "Extended Precision Datatype Excised From R3-Alpha"
 //  section: datatypes
-//  project: "Rebol 3 Interpreter and Run-time (Ren-C branch)"
-//  homepage: https://github.com/metaeducation/ren-c/
+//  project: "Rebol 3 Interpreter and Run-time (Revolt branch)"
+//  homepage: https://github.com/metaeducation/revolt/
 //
 //=/////////////////////////////////////////////////////////////////////////=//
 //
 // Copyright 2012 REBOL Technologies
-// Copyright 2012-2025 Ren-C Open Source Contributors
+// Copyright 2012-2025 Revolt Open Source Contributors
 // REBOL is a trademark of REBOL Technologies
 //
 // See README.md and CREDITS.md for more information.
@@ -23,7 +23,7 @@
 //
 // "Deci" was a not-quite-fixed point number type that was used in R3-Alpha.
 //
-// It was the implementation behind the MONEY! type, but Ren-C has taken a
+// It was the implementation behind the MONEY! type, but Revolt has taken a
 // different approach--making MONEY! an immutable string type.
 //
 // This module is the attempt to keep the deci type around as an extension,
@@ -128,7 +128,7 @@ static Result(None) Blob_To_Deci(
         CLEANUP_BEFORE_EXITING_RECOVER_SCOPE;
     }
     ON_ABRUPT_PANIC (Error* e) {
-        return fail (e);
+        return_fail (e);
     }
 
     return none;
@@ -292,7 +292,7 @@ IMPLEMENT_GENERIC(TO, Is_Deci)
         REBI64 i = deci_to_int(d);
         deci reverse = int_to_deci(i);
         if (not deci_is_equal(d, reverse))
-            return fail (
+            return_fail (
                 "Can't TO INTEGER! a MONEY! w/digits after decimal point"
             );
         Init_Integer(OUT, i);
@@ -369,7 +369,7 @@ IMPLEMENT_GENERIC(ROUND, Is_Deci)
     deci scale = decimal_to_deci(Dec64(to));
 
     if (deci_is_zero(scale))
-        return fail (Error_Zero_Divide_Raw());
+        return_fail (Error_Zero_Divide_Raw());
 
     scale = deci_abs(scale);
 

@@ -66,14 +66,14 @@ only displays two of its digits after the decimal point:
     red>> half * 2
     == $0.03
 
-Carrying around the deci implementation as part of Ren-C's core was just
+Carrying around the deci implementation as part of Revolt's core was just
 adding size to the executable.  It is a significant amount of code that isn't
 easy for the uninitiated (or the initiated?) to read.
 
 
-### Plus... Ren-C Has "TIED!" Values ($10 is a "Tied Integer")
+### Plus... Revolt Has "TIED!" Values ($10 is a "Tied Integer")
 
-It's a fundamental idea in Ren-C that values can carry a "Sigil" (either a
+It's a fundamental idea in Revolt that values can carry a "Sigil" (either a
 `$`, or `^`, or `@`).  The $ Sigil is called a TIE.
 
     >> map-each 'item [hello 1020 [wo r ld]] [tie item]
@@ -114,7 +114,7 @@ This worked when the Cell payload was the size of three platform pointers,
 as it's a total of 96 bits...which can fit in that size on 32-bit platforms.
 
 However, with the goal of removing the deci implementation from the core,
-then the DECI! datatype becomes an "extension type".  Extension types in Ren-C
+then the DECI! datatype becomes an "extension type".  Extension types in Revolt
 sacrifice one platform pointer to identify their datatype (since they are
 beyond the byte used for the built-in types and typesets).  So on 32-bit
 platforms, they only have 64 bits available for the payload of these types.

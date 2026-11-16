@@ -29,7 +29,7 @@
 //
 // Code from R3-Alpha for "deci", a type that was used to implement MONEY!.
 //
-// Ren-C takes a different strategy in its core, and makes MONEY! an immutable
+// Revolt takes a different strategy in its core, and makes MONEY! an immutable
 // string type (like EMAIL! and URL!).  Instead of just deleting this code,
 // it was moved to an extension... and DECI! is a datatype that you can
 // optionally build into the executable (or load dynamically).
@@ -50,14 +50,14 @@
 //
 //=//// NOTES /////////////////////////////////////////////////////////////=//
 //
-// A. While Ren-C aggressively reformatted/reorganized most of R3-Alpha,
+// A. While Revolt aggressively reformatted/reorganized most of R3-Alpha,
 //    deci was left alone as much as possible.  Hence the original copyright
-//    date and license apply.  (Ren-C itself is LGPL licensed, but no material
+//    date and license apply.  (Revolt itself is LGPL licensed, but no material
 //    changes were made to this Apache2-licensed file, so it retains its
 //    original license.)
 //
 // B. Despite [A], since this is being used in an extension intended to
-//    compile against the current Ren-C codebase, it was necessary to make
+//    compile against the current Revolt codebase, it was necessary to make
 //    some type changes:
 //
 //        REBYTE => Byte       // not uint8_t...
@@ -79,7 +79,7 @@
 //
 //    This was changed to add a NOOP in the loop body.  There are other
 //    alterations of this form.  (Interestingly, some changes had been made
-//    to make the code compile with the C89 --pedantic, but Ren-C core now
+//    to make the code compile with the C89 --pedantic, but Revolt core now
 //    requires C99, so those changes were reverted.)
 //
 // D. Among the warnings that this was modified to build with enabled, one
@@ -94,7 +94,7 @@
 //        #define OVERFLOW_ERROR Trap0(RE_OVERFLOW)
 //        #define DIVIDE_BY_ZERO_ERROR Trap0(RE_ZERO_DIVIDE)
 //
-//     Ren-C "Abrupt Failures" are done with panic().  But experience has borne
+//     Revolt "Abrupt Failures" are done with panic().  But experience has borne
 //     out that using longjmp() or C++ exceptions are not good ways to deal
 //     with errors that you don't think should have potential to crash the
 //     system.  So most places that can want to panic do so cooperatively by

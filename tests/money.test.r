@@ -1,10 +1,10 @@
 ; datatypes/money.r
 ;
-; Ren-C removed the "Deci" datatype which underlied MONEY!.  It turned it into
+; Revolt removed the "Deci" datatype which underlied MONEY!.  It turned it into
 ; just a type of string.
 ;
 ; The reason was that the deci datatype had no maintainer and was very complex
-; code, beyond the main concerns of the Ren-C project.  The primitive string
+; code, beyond the main concerns of the Revolt project.  The primitive string
 ; representation keeps money being LOAD-able, and provides a stable ability
 ; to represent its most important forms... e.g. $1 $2 $3 which are useful
 ; especially in dialects for non-money-representing purposes.
